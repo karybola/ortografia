@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quiz Neptur: Ortografía</title>
+    <style>
+        /* --- Optimización para Scroll en WebView --- */
+        html {
+            -webkit-overflow-scrolling: touch; /* Para un scroll más fluido en iOS y algunos WebViews Android */
+            scroll-behavior: smooth; /* Scroll suave para anclas, no directamente para el problema, pero bueno tenerlo */
+        }
+        /* --- Fin Optimización para Scroll --- */
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6DD5FA, #2980B9);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        #quiz-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 750px;
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        #quiz-header {
+            margin-bottom: 25px;
+            border-bottom: 2px solid #007bff; /* Azul para el borde, haciendo juego con el título Neptur */
+            padding-bottom: 15px;
+        }
+
+        #quiz-header h1 {
+            color: #2C3E50;
+            font-size: 2.2em;
+            margin-bottom: 5px;
+        }
+         #quiz-header h1 .neptur-brand {
+            color: #007bff; /* AZUL para Neptur */
+            font-weight: bold;
+        }
+        #quiz-header p {
+            font-size: 1.1em;
+            color: #555;
+        }
+
+
+        #timer {
+            font-size: 1.2em;
+            color: #E74C3C;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        #question-area h2 {
+            font-size: 1.5em;
+            color: #34495E;
+            margin-bottom: 20px;
+            line-height: 1.4;
+            text-align: left;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option-btn {
+            background-color: #3498DB;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #2980B9;
+            transform: translateY(-2px);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .option-btn.correct {
+            background-color: #2ECC71 !important;
+            border: 2px solid #27ae60;
+        }
+
+        .option-btn.incorrect {
+            background-color: #E74C3C !important;
+            border: 2px solid #c0392b;
+        }
+
+        #explanation-area {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 0.95em;
+            line-height: 1.6;
+            border-left: 5px solid #007bff; /* Azul para el borde de la explicación */
+        }
+        #explanation-area h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.2em;
+        }
+        #explanation-area p {
+            margin-bottom: 5px;
+        }
+
+        #navigation-area button {
+            background-color: #007bff; /* Botón de navegación azul */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 15px;
+        }
+
+        #navigation-area button:hover {
+            background-color: #0056b3; /* Azul más oscuro para hover */
+        }
+
+        #results-screen {
+            display: none;
+        }
+        #results-screen h2 {
+             color: #2C3E50;
+             font-size: 2em;
+        }
+        #results-screen p {
+            font-size: 1.2em;
+            margin: 15px 0;
+        }
+        #detailed-results-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .result-item {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        .result-item p { font-size: 1em; margin: 8px 0; }
+        .result-item strong { color: #333; }
+        .result-item .user-answer.correct { color: #2ECC71; font-weight: bold; }
+        .result-item .user-answer.incorrect { color: #E74C3C; font-weight: bold; }
+        .result-item .explanation-preview {
+            font-style: italic;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        #start-screen {
+            display: block;
+        }
+        #start-screen p {
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        #start-btn {
+            background-color: #F39C12;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.3em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #start-btn:hover {
+            background-color: #E67E22;
+        }
+
+        /* Responsividad */
+        @media (max-width: 600px) {
+            #quiz-container {
+                padding: 20px;
+                margin-top: 10px;
+                margin-bottom: 10px;
+            }
+            #quiz-header h1 {
+                font-size: 1.8em;
+            }
+            #question-area h2 {
+                font-size: 1.2em;
+            }
+            .option-btn {
+                padding: 12px 15px;
+                font-size: 0.95em;
+            }
+            body {
+                padding: 10px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <div id="start-screen">
+            <div id="quiz-header">
+                <h1>Quiz <span class="neptur-brand">Neptur</span></h1>
+                <p>Ortografía (Español 6)</p>
+            </div>
+            <p>Bienvenido al quiz sobre Redacción y Vocabulario. Tendrás <strong>12 minutos</strong> para completarlo.</p>
+            <p>Lee cada pregunta con atención y selecciona la mejor respuesta. Al final, podrás revisar tus aciertos y aprender de cada explicación.</p>
+            <button id="start-btn">Comenzar Quiz</button>
+        </div>
+
+        <div id="question-screen" style="display:none;">
+            <div id="quiz-header">
+                 <h1>Quiz <span class="neptur-brand">Neptur</span></h1>
+                 <p id="question-counter"></p>
+            </div>
+            <div id="timer">Tiempo restante: 12:00</div>
+            <div id="question-area">
+                <h2 id="question-text"></h2>
+                <div id="options-grid">
+                    <button class="option-btn" data-index="0"></button>
+                    <button class="option-btn" data-index="1"></button>
+                    <button class="option-btn" data-index="2"></button>
+                    <button class="option-btn" data-index="3"></button>
+                </div>
+            </div>
+            <div id="explanation-area" style="display:none;">
+                <h3 id="explanation-title"></h3>
+                <p id="explanation-text"></p>
+            </div>
+            <div id="navigation-area">
+                <button id="next-btn" style="display:none;">Siguiente Pregunta</button>
+            </div>
+        </div>
+
+        <div id="results-screen" style="display:none;">
+            <h2>¡Quiz Completado!</h2>
+            <p id="final-score"></p>
+            <p id="time-taken"></p>
+            <h3>Resumen Detallado de Respuestas:</h3>
+            <div id="detailed-results-container">
+                <!-- Aquí se mostrarán los detalles de cada pregunta -->
+            </div>
+            <button id="restart-btn">Volver a Intentar</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN DEL QUIZ ---
+        const TOTAL_TIME = 12 * 60; 
+
+        let questions = [
+    {
+        text: "¿Cuándo se utiliza la letra 'C' en el plural de palabras que en singular terminan en 'Z'?",
+        options: [
+            "Siempre que la palabra tenga más de dos sílabas.",
+            "Solo si la palabra original en 'Z' es un sustantivo.",
+            "En todos los casos, como en 'juez - jueces'.",
+            "Nunca, el plural de palabras con 'Z' siempre mantiene la 'Z'."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Exacto! La regla indica que palabras que en singular terminan en 'Z', su plural se forma con 'C'. Ejemplos: juez – jueces, nuez – nueces.",
+            incorrectBase: "Revisa la regla específica para plurales de palabras terminadas en 'Z'. ",
+            optionsExplanation: [
+                "El número de sílabas no es el criterio para esta regla.",
+                "La regla se aplica independientemente de si es sustantivo u otra categoría, siempre que termine en 'Z'.",
+                "Esta es la regla correcta y el ejemplo lo ilustra.",
+                "Esto es incorrecto; la 'Z' cambia a 'C' en estos plurales."
+            ]
+        }
+    },
+    {
+        text: "Los adjetivos terminados en '-oso', '-osa', '-sivo', '-siva' generalmente se escriben con:",
+        options: [
+            "C",
+            "S",
+            "Z",
+            "X"
+        ],
+        correctAnswerIndex: 1,
+        explanation: {
+            correct: "¡Correcto! Adjetivos con estas terminaciones como 'precioso', 'cremosa', 'posesivo', 'expresiva' van con 'S', con excepciones como 'lascivo' y 'nocivo'.",
+            incorrectBase: "Hay una letra específica para estas terminaciones en adjetivos. ",
+            optionsExplanation: [
+                "No es la letra usual para estas terminaciones.",
+                "Esta es la regla general, con muy pocas excepciones.",
+                "No es la letra usual para estas terminaciones.",
+                "La 'X' no se usa en estas terminaciones."
+            ]
+        }
+    },
+    {
+        text: "Las palabras que terminan en '-azo' o '-aza' y expresan aumentativo o superlativo, se escriben con:",
+        options: [
+            "S, como en 'grandasa'.",
+            "C, como en 'golpaco'.",
+            "Z, como en 'bombazo'.",
+            "SS, como en 'exitasso'."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Muy bien! Las terminaciones '-azo', '-aza' para aumentativos o superlativos (que indican un golpe o algo grande) se escriben con 'Z', por ejemplo: bombazo, garrotazo.",
+            incorrectBase: "Esta terminación para aumentativos tiene una regla específica de letra. ",
+            optionsExplanation: [
+                "La 'S' no se usa para esta terminación aumentativa.",
+                "La 'C' no se usa para esta terminación aumentativa.",
+                "Esta es la regla correcta.",
+                "La 'SS' no es una grafía común en español para estas terminaciones."
+            ]
+        }
+    },
+    {
+        text: "Según la regla de 'M' y 'N' con 'B' y 'V', ¿cuál de las siguientes afirmaciones es correcta?",
+        options: [
+            "La 'M' siempre va antes de 'V', y la 'N' siempre antes de 'B'.",
+            "La 'B' solo puede acompañar a la 'N', y la 'V' solo puede acompañar a la 'M'.",
+            "La 'M' solo puede acompañar a la 'B', y la 'V' solo puede acompañar a la 'N'.",
+            "Se puede usar 'M' o 'N' indistintamente antes de 'B' o 'V'."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Excelente! Una regla fundamental es: antes de 'B' siempre va 'M' (ej. ambiguo, tambo), y antes de 'V' siempre va 'N' (ej. envolver, envejeció).",
+            incorrectBase: "Hay una regla muy conocida sobre el uso de 'm' y 'n' antes de 'b' y 'v'. ",
+            optionsExplanation: [
+                "Es al revés para ambas.",
+                "Es al revés para ambas.",
+                "Esta es la regla correcta: M antes de B, N antes de V.",
+                "No, hay una regla específica y no son intercambiables."
+            ]
+        }
+    },
+    {
+        text: "Las palabras que inician con 'eva-', 'evi-' y 'evo-' generalmente se escriben con:",
+        options: [
+            "B, como en 'ebaluar'.",
+            "V, como en 'evaluar'.",
+            "H, como en 'hevaluar'.",
+            "Con cualquiera de las dos, dependiendo del significado."
+        ],
+        correctAnswerIndex: 1,
+        explanation: {
+            correct: "¡Así es! Palabras como 'evaluar', 'evitar', 'evocación' inician con 'V', con raras excepciones como 'ébano'.",
+            incorrectBase: "Estas sílabas iniciales tienen una preferencia clara por una letra. ",
+            optionsExplanation: [
+                "No es la grafía correcta para estos inicios.",
+                "Esta es la regla general.",
+                "La 'H' no se usa en estos casos.",
+                "Hay una regla predominante."
+            ]
+        }
+    },
+    {
+        text: "Las palabras que terminan en '-aje', '-eje' y '-jería' se escriben con 'J', excepto:",
+        options: [
+            "Coraje y hereje.",
+            "Paisaje y relojería.",
+            "Agenda y agencia.",
+            "Mensaje y cerrajería."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Perfecto! La regla es que estas terminaciones van con 'J' (brebaje, hereje, conserjería), pero 'agenda' y 'agencia' son excepciones importantes que van con 'G'.",
+            incorrectBase: "El texto menciona excepciones específicas a esta regla de la 'J'. ",
+            optionsExplanation: [
+                "Estas sí siguen la regla de la 'J'.",
+                "Estas sí siguen la regla de la 'J'.",
+                "Estas son las excepciones mencionadas que se escriben con 'G'.",
+                "Estas sí siguen la regla de la 'J'."
+            ]
+        }
+    },
+    {
+        text: "Se usa 'LL' en palabras terminadas en '-illo', '-illa', como por ejemplo:",
+        options: [
+            "Cuchiyo, pastiya.",
+            "Cuchillo, pastilla.",
+            "Cuchio, pastia.",
+            "Cuchisso, pastissa."
+        ],
+        correctAnswerIndex: 1,
+        explanation: {
+            correct: "¡Muy bien! Las terminaciones diminutivas o despectivas '-illo' e '-illa' se escriben con 'LL', como en 'palillo', 'rencilla', 'cuchillo', 'pastilla'.",
+            incorrectBase: "Esta regla se aplica a terminaciones comunes. ",
+            optionsExplanation: [
+                "La grafía es incorrecta.",
+                "Esta es la grafía correcta siguiendo la regla.",
+                "La grafía es incorrecta.",
+                "La grafía es incorrecta."
+            ]
+        }
+    },
+    {
+        text: "La 'R' ejerce su sonido fuerte cuando:",
+        options: [
+            "Siempre está en medio de dos vocales.",
+            "Solo cuando es la última letra de la palabra.",
+            "Está al inicio de la palabra, al final, o en medio antes o después de una consonante.",
+            "Únicamente cuando se escribe como 'RR'."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Correcto! La 'R' suena fuerte al inicio (ramo), al final (amor), o junto a otra consonante (enredar, artero). Para el sonido fuerte entre vocales se usa 'RR'.",
+            incorrectBase: "El sonido fuerte de la 'R' tiene varias condiciones. ",
+            optionsExplanation: [
+                "Entre dos vocales, la 'R' simple suena suave (vara); para sonido fuerte se usa 'RR' (carro).",
+                "También suena fuerte al inicio o junto a consonantes.",
+                "Esta es la explicación correcta y completa.",
+                "La 'R' simple también puede tener sonido fuerte en ciertas posiciones."
+            ]
+        }
+    },
+    {
+        text: "Las palabras agudas se acentúan gráficamente (llevan tilde) cuando:",
+        options: [
+            "Siempre, sin importar su terminación.",
+            "Terminan en cualquier consonante excepto 'n' o 's'.",
+            "Terminan en 'n', 's' o vocal, o si contienen un hiato con otra terminación.",
+            "Su sílaba tónica es la penúltima."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Excelente! Las agudas (sílaba tónica en la última) llevan tilde si terminan en 'n', 's' o vocal. También si hay un hiato que rompe diptongo y la fuerza recae en la vocal cerrada, como en 'maíz' o 'baúl'.",
+            incorrectBase: "La regla de acentuación de las agudas depende de su terminación. ",
+            optionsExplanation: [
+                "No, solo bajo ciertas condiciones de terminación.",
+                "Es al revés; se acentúan si terminan en 'n', 's' o vocal.",
+                "Esta es la regla correcta.",
+                "Si la sílaba tónica es la penúltima, son graves, no agudas."
+            ]
+        }
+    },
+    {
+        text: "¿Cuál es la regla de acentuación para las palabras esdrújulas y sobreesdrújulas?",
+        options: [
+            "Se acentúan solo si terminan en vocal.",
+            "Nunca se acentúan.",
+            "Se acentúan solo si no terminan en 'n' o 's'.",
+            "TODAS las palabras esdrújulas y sobreesdrújulas se acentúan siempre."
+        ],
+        correctAnswerIndex: 3,
+        explanation: {
+            correct: "¡Así es! La regla es simple y directa: todas las palabras esdrújulas (acento en la antepenúltima sílaba) y sobreesdrújulas (acento antes de la antepenúltima) llevan tilde.",
+            incorrectBase: "Las esdrújulas y sobreesdrújulas tienen una regla de acentuación muy particular. ",
+            optionsExplanation: [
+                "Incorrecto, su acentuación no depende de la terminación.",
+                "Incorrecto, siempre se acentúan.",
+                "Incorrecto, su acentuación no depende de la terminación.",
+                "Esta es la regla correcta."
+            ]
+        }
+    },
+    {
+        text: "El punto y coma (;) se utiliza para:",
+        options: [
+            "Marcar pausas breves o enumerar elementos simples.",
+            "Indicar el final absoluto de un texto.",
+            "Introducir una explicación o ejemplo.",
+            "Marcar una pausa más fuerte que la coma, separando ideas relacionadas dentro de un mismo tema o en listados complejos."
+        ],
+        correctAnswerIndex: 3,
+        explanation: {
+            correct: "¡Correcto! El punto y coma indica una pausa mayor que la coma pero menor que el punto. Se usa para separar ideas relacionadas que podrían ser oraciones independientes o en enumeraciones complejas donde ya se usan comas.",
+            incorrectBase: "Cada signo de puntuación tiene un uso específico para las pausas y la estructura. ",
+            optionsExplanation: [
+                "Eso es más propio de la coma.",
+                "Eso lo hace el punto final.",
+                "Eso lo hacen los dos puntos.",
+                "Esta es la función principal del punto y coma."
+            ]
+        }
+    },
+    {
+        text: "¿En qué casos se utilizan las mayúsculas, además de después de un punto?",
+        options: [
+            "Para todos los sustantivos comunes.",
+            "En los nombres de los días de la semana y los meses.",
+            "En nombres propios (personas, lugares), títulos de obras, siglas (ONU), e instituciones.",
+            "Siempre que una palabra contenga la letra 'H'."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Muy bien! Las mayúsculas se usan en nombres propios, títulos de obras, siglas de hasta 4 letras, nombres de instituciones, festividades, entre otros, además de al inicio de oración o después de punto.",
+            incorrectBase: "El uso de mayúsculas tiene reglas específicas más allá del inicio de oración. ",
+            optionsExplanation: [
+                "Los sustantivos comunes van en minúscula a menos que inicien oración.",
+                "Los días de la semana y meses van en minúscula, a menos que formen parte de un nombre propio de festividad (ej. Viernes Santo).",
+                "Esta es una descripción correcta de varios usos de las mayúsculas.",
+                "La presencia de la 'H' no determina el uso de mayúscula."
+            ]
+        }
+    }
+];
+
+        // --- VARIABLES GLOBALES ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timeLeft = TOTAL_TIME;
+        let timerInterval;
+        let quizStartTime;
+        let userAnswers = [];
+
+        // --- ELEMENTOS DEL DOM ---
+        const startScreen = document.getElementById('start-screen');
+        const questionScreen = document.getElementById('question-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        
+        const startBtn = document.getElementById('start-btn');
+        const timerDisplay = document.getElementById('timer');
+        const questionCounter = document.getElementById('question-counter');
+        const questionText = document.getElementById('question-text');
+        const optionButtons = document.querySelectorAll('.option-btn');
+        const explanationArea = document.getElementById('explanation-area');
+        const explanationTitle = document.getElementById('explanation-title');
+        const explanationText = document.getElementById('explanation-text');
+        const nextBtn = document.getElementById('next-btn');
+        
+        const finalScoreDisplay = document.getElementById('final-score');
+        const timeTakenDisplay = document.getElementById('time-taken');
+        const detailedResultsContainer = document.getElementById('detailed-results-container');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // --- FUNCIONES ---
+        function startQuiz() {
+            if (questions.length === 0) {
+                alert("Error: No hay preguntas cargadas. Por favor, revisa el array 'questions' en el script.");
+                return;
+            }
+
+            startScreen.style.display = 'none';
+            questionScreen.style.display = 'block';
+            resultsScreen.style.display = 'none';
+
+            currentQuestionIndex = 0;
+            score = 0;
+            timeLeft = TOTAL_TIME;
+            userAnswers = [];
+            questions.forEach(q => {
+                q.userAnswerIndex = null;
+                q.isCorrect = null;
+            });
+
+
+            quizStartTime = new Date();
+            displayQuestion();
+            startTimer();
+        }
+
+        function displayQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                const currentQuestion = questions[currentQuestionIndex];
+                questionCounter.textContent = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+                questionText.textContent = currentQuestion.text;
+                
+                optionButtons.forEach((btn, index) => {
+                    btn.textContent = currentQuestion.options[index];
+                    btn.disabled = false;
+                    btn.classList.remove('correct', 'incorrect');
+                    btn.style.display = 'block';
+                });
+
+                explanationArea.style.display = 'none';
+                nextBtn.style.display = 'none';
+                window.scrollTo(0,0);
+            } else {
+                endQuiz();
+            }
+        }
+
+        function handleOptionClick(event) {
+            const selectedOptionIndex = parseInt(event.target.dataset.index);
+            const currentQuestion = questions[currentQuestionIndex];
+            
+            currentQuestion.userAnswerIndex = selectedOptionIndex;
+
+            optionButtons.forEach(btn => btn.disabled = true);
+
+            let explanationToShow = "";
+            let titleExplanation = "";
+
+            if (selectedOptionIndex === currentQuestion.correctAnswerIndex) {
+                score++;
+                event.target.classList.add('correct');
+                titleExplanation = "¡Respuesta Correcta!";
+                explanationToShow = currentQuestion.explanation.correct;
+                currentQuestion.isCorrect = true;
+            } else {
+                event.target.classList.add('incorrect');
+                optionButtons[currentQuestion.correctAnswerIndex].classList.add('correct');
+                titleExplanation = "Respuesta Incorrecta";
+                explanationToShow = `${currentQuestion.explanation.incorrectBase} La respuesta correcta era: "<strong>${currentQuestion.options[currentQuestion.correctAnswerIndex]}</strong>".<br><br><em>Explicación:</em> ${currentQuestion.explanation.optionsExplanation[currentQuestion.correctAnswerIndex]}`;
+                if (currentQuestion.explanation.optionsExplanation[selectedOptionIndex] !== currentQuestion.explanation.optionsExplanation[currentQuestion.correctAnswerIndex]) {
+                     explanationToShow = `Elegiste: "${currentQuestion.options[selectedOptionIndex]}".<br><em>Por qué no es correcto:</em> ${currentQuestion.explanation.optionsExplanation[selectedOptionIndex]}<br><br>La respuesta correcta era: "<strong>${currentQuestion.options[currentQuestion.correctAnswerIndex]}</strong>".<br><em>Explicación:</em> ${currentQuestion.explanation.optionsExplanation[currentQuestion.correctAnswerIndex]}`;
+                }
+                 currentQuestion.isCorrect = false;
+            }
+            
+            explanationTitle.textContent = titleExplanation;
+            explanationText.innerHTML = explanationToShow;
+            explanationArea.style.display = 'block';
+            nextBtn.style.display = 'inline-block';
+
+            userAnswers.push({
+                questionText: currentQuestion.text,
+                options: currentQuestion.options,
+                userAnswer: currentQuestion.options[selectedOptionIndex],
+                correctAnswer: currentQuestion.options[currentQuestion.correctAnswerIndex],
+                isCorrect: selectedOptionIndex === currentQuestion.correctAnswerIndex,
+                explanation: explanationToShow
+            });
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            displayQuestion();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerDisplay.textContent = `Tiempo restante: ${Math.floor(timeLeft / 60)}:${(timeLeft % 60) < 10 ? '0' : ''}${timeLeft % 60}`;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `Tiempo restante: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "¡Tiempo agotado!";
+                    endQuiz(true); 
+                }
+            }, 1000);
+        }
+
+        function endQuiz(timeUp = false) {
+            clearInterval(timerInterval);
+            questionScreen.style.display = 'none';
+            resultsScreen.style.display = 'block';
+             window.scrollTo(0,0);
+
+            const quizEndTime = new Date();
+            const timeSpentMs = quizEndTime - quizStartTime;
+            const timeSpentSec = Math.floor(timeSpentMs / 1000);
+            const minutesSpent = Math.floor(timeSpentSec / 60);
+            const secondsSpent = timeSpentSec % 60;
+
+            if (timeUp) {
+                 finalScoreDisplay.textContent = `¡Tiempo agotado! Tu puntaje final es: ${score} de ${questions.length}`;
+            } else {
+                 finalScoreDisplay.textContent = `Tu puntaje final es: ${score} de ${questions.length}`;
+            }
+            timeTakenDisplay.textContent = `Tiempo utilizado: ${minutesSpent} minutos y ${secondsSpent} segundos.`;
+
+            renderDetailedResults();
+        }
+        
+        function renderDetailedResults() {
+            detailedResultsContainer.innerHTML = ''; 
+            questions.forEach((q, index) => {
+                const resultDiv = document.createElement('div');
+                resultDiv.classList.add('result-item');
+                
+                let userAnswerText = "No respondida";
+                let userAnswerClass = "";
+                let explanationContent = q.explanation.optionsExplanation[q.correctAnswerIndex];
+
+                if (q.userAnswerIndex !== null) {
+                    userAnswerText = q.options[q.userAnswerIndex];
+                    if (q.isCorrect) {
+                        userAnswerClass = 'correct';
+                        explanationContent = q.explanation.correct;
+                    } else {
+                        userAnswerClass = 'incorrect';
+                        explanationContent = `Elegiste: "${q.options[q.userAnswerIndex]}". <span class="explanation-preview">(${q.explanation.optionsExplanation[q.userAnswerIndex]})</span><br>Correcta: "${q.options[q.correctAnswerIndex]}". <span class="explanation-preview">(${q.explanation.optionsExplanation[q.correctAnswerIndex]})</span>`;
+                    }
+                } else {
+                     explanationContent = `La respuesta correcta era: "${q.options[q.correctAnswerIndex]}". <span class="explanation-preview">(${q.explanation.optionsExplanation[q.correctAnswerIndex]})</span>`;
+                }
+
+                resultDiv.innerHTML = `
+                    <p><strong>Pregunta ${index + 1}:</strong> ${q.text}</p>
+                    <p>Tu respuesta: <span class="user-answer ${userAnswerClass}">${userAnswerText}</span></p>
+                    ${!q.isCorrect && q.userAnswerIndex !== null ? `<p>Respuesta correcta: <strong>${q.options[q.correctAnswerIndex]}</strong></p>` : ''}
+                     ${q.userAnswerIndex === null ? `<p>Respuesta correcta: <strong>${q.options[q.correctAnswerIndex]}</strong></p>` : ''}
+                    <p><em>Explicación:</em> ${explanationContent}</p>
+                `;
+                detailedResultsContainer.appendChild(resultDiv);
+            });
+        }
+
+        // --- EVENT LISTENERS ---
+        startBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        restartBtn.addEventListener('click', () => {
+            resultsScreen.style.display = 'none';
+            startScreen.style.display = 'block';
+            window.scrollTo(0,0);
+        });
+
+        optionButtons.forEach(button => {
+            button.addEventListener('click', handleOptionClick);
+        });
+
+    </script>
+</body>
+</html>
